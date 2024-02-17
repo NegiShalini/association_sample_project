@@ -1,14 +1,20 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 const address = require('./address');
+
 module.exports = (sequelize, DataTypes) => {
   class student extends Model {
     static associate(models) {
-      student.belongsTo(address)
+      student.hasMany(models.address, { foreignKey: 'studentId' })
+    }
+
+    async lazyLoadAddresses() {
+      // Lazy load the associated addresses for the student
+      const addresses = await this.getAddresses();
+      return addresses;
     }
   }
+
   student.init({
     id: {
       type: DataTypes.INTEGER,
@@ -27,12 +33,17 @@ module.exports = (sequelize, DataTypes) => {
       isNumeric: true
     },
     date_of_birth: DataTypes.DATE,
-    password: {
-      type: DataTypes.STRING,
-      set(value) {
-        const hashedPassword = bcrypt.hashSync(value, 7);
-        this.setDataValue('password', hashedPassword);
-      }
+    // password: {
+    //   type: DataTypes.STRING,
+    //   set(value) {
+    //     const hashedPassword = bcrypt.hashSync(value, 7);
+    //     this.setDataValue('password', hashedPassword);
+    //   }
+    // },
+    address_count:{
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      field: 'count' 
     },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
@@ -40,5 +51,6 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'student',
   });
+
   return student;
 };
